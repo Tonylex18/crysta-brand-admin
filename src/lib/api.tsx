@@ -55,6 +55,48 @@ export type Admin = {
     created_at: string;
 };
 
+
+export type Category = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    image_url: string | null;
+    created_at: string;
+};
+
+export type Product = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    price: number;
+    category_id: string | null;
+    image_url: string | null;
+    images: string[];
+    sizes: string[];
+    colors: string[];
+    stock: number;
+    featured: boolean;
+    created_at: string;
+};
+
+export type Order = {
+    id: string;
+    user_id: string;
+    status: string;
+    total: number;
+    shipping_address: {
+        name: string;
+        address: string;
+        city: string;
+        state: string;
+        zip: string;
+        country: string;
+    };
+    created_at: string;
+};
+
 // Auth API
 export const authAPI = {
     signUp: async (name: string, email: string, password: string) => {
@@ -102,6 +144,117 @@ export const verificationAPI = {
         return response.data;
     },
 };
+
+// Products API
+export const productsAPI = {
+    addProduct: async (productData: FormData) => {
+        const response = await api.post('products/add-product', productData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    updateProduct: async (id: string, productData: FormData) => {
+        const response = await api.put(`products/update-product/${id}`, productData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    deleteProduct: async (id: string) => {
+        const response = await api.delete(`products/delete-product/${id}`);
+        return response.data;
+    },
+
+    activateProduct: async (id: string) => {
+        const response = await api.patch(`products/activate-product/${id}/activate`);
+        return response.data;
+    },
+
+    deactivateProduct: async (id: string) => {
+        const response = await api.put(`products/deactivate-product/${id}/deactivate`);
+        return response.data;
+    },
+
+    getAll: async () => {
+        const response = await api.get('products/get-products');
+        return response.data;
+    },
+
+    getById: async (id: string) => {
+        const response = await api.get(`products/${id}`);
+        return response.data;
+    },
+
+    getByCategory: async (categoryId: string) => {
+        const response = await api.get(`products/category/${categoryId}`);
+        return response.data;
+    },
+};
+
+
+// Categories API
+export const categoriesAPI = {
+    addCategory: async (categoryData: FormData) => {
+        const response = await api.post('categories/add-category', categoryData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    getAll: async () => {
+      const response = await api.get('categories');
+      return response.data;
+    },
+
+    deleteCategory: async (id: string) => {
+        const response = await api.delete(`categories/delete-category/${id}`);
+        return response.data;
+    },
+
+    updateCategory: async (id: string, categoryData: FormData) => {
+        const response = await api.put(`categories/update-category/${id}`, categoryData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    activateCategory: async (id: string) => {
+        const response = await api.put(`categories/activate-category/${id}`);
+        return response.data;
+    },
+
+    deactivateCategory: async (id: string) => {
+        const response = await api.put(`categories/deactivate-category/${id}`);
+        return response.data;
+    }
+  };
+
+//   orders API
+export const ordersAPI = {
+    getAllOrders: async () => {
+        const response = await api.get('orders/get-all-orders');
+        return response.data;
+    },
+
+    getOrderById: async (id: string) => {
+        const response = await api.get(`orders/get-order-byId/${id}`);
+        return response.data;
+    },
+
+    updateOrderStatus: async (id: string, status: string) => {
+        const response = await api.put(`orders/update-order-status/${id}`, { status });
+        return response.data;
+    },
+}
 
 
 export function resolveImageUrl(path?: string | null): string {

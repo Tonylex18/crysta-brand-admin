@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { type JSX } from 'react';
 import {
   ShoppingCart, BarChart3, Users, Package, Tag, MessageSquare,
   Settings, LogOut, Search, Bell, MoreVertical
@@ -18,14 +18,6 @@ type MenuItemProps = {
   label: string;
   active?: boolean;
   badge?: string;
-};
-
-type RevenueChartProps = {
-  data: { month: string; value: number }[];
-};
-
-type DonutChartProps = {
-  data: { source: string; orders: number; amount: number }[];
 };
 
 type OrdersTableProps = {
