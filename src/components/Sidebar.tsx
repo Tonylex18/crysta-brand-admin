@@ -1,4 +1,4 @@
-import { BarChart3, LogOut, MessageSquare, Package, Settings, ShoppingCart, Tag, Users, X } from "lucide-react";
+import { BarChart3, LogOut, MessageSquare, Package, Settings, ShoppingBasket, ShoppingCart, Tag, Users, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -62,6 +62,7 @@ export const Sidebar = ({ currentPage, onNavigate, onClose }: SidebarProps) => {
           <p className="text-xs font-semibold text-gray-400 mb-3 px-2">MENU</p>
           <div className="space-y-1">
             <MenuItem icon={BarChart3} label="Dashboard" page="dashboard" />
+            <MenuItem icon={ShoppingBasket} label="Category" page="category" />
             <MenuItem icon={Package} label="Products" page="products" />
             <MenuItem icon={Users} label="Customers" page="customers" />
             <MenuItem icon={ShoppingCart} label="Orders" page="orders" />

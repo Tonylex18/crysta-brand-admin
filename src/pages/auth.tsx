@@ -12,7 +12,7 @@ export default function Auth({ onClose }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, admin } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -39,12 +39,13 @@ export default function Auth({ onClose }: AuthModalProps) {
               if (mode === 'signin') {
                 await signIn(email, password);
                 toast.success('Signed in successfully');
-                navigate('/dashboard');
+                const nextAdminId = admin?.id || 'me';
+                navigate(`/admin/${nextAdminId}/dashboard`, { replace: true });
               } else {
                 await signUp(name, email, password);
                 toast.success('Account created successfully');
                 sessionStorage.setItem('pendingEmail', email);
-                navigate('/verify-email');
+                navigate('/verify-email')
               }
               onClose?.();
             } catch (err: any) {

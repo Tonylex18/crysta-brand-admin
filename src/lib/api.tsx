@@ -100,7 +100,7 @@ export type Order = {
 // Auth API
 export const authAPI = {
     signUp: async (name: string, email: string, password: string) => {
-        const response = await api.post('admin/sign-up', { name, email, password });
+        const response = await api.post('admin/admin-signup', { name, email, password });
         const data = response.data;
         return {
             admin: data.user,
@@ -109,7 +109,7 @@ export const authAPI = {
     },
 
     signIn: async (email: string, password: string) => {
-        const response = await api.post('admin/login', { email, password });
+        const response = await api.post('admin/admin-login', { email, password });
         const data = response.data;
         return {
             admin: data.user,
@@ -136,7 +136,7 @@ export const authAPI = {
 // Email verification API (user routes)
 export const verificationAPI = {
     verifyEmail: async (email: string, otp: string | number) => {
-        const response = await api.post('admin/verify-user-mail', { email, otp });
+        const response = await api.post('admin/verify-admin-mail', { email, otp });
         return response.data;
     },
     resendOtp: async (email: string) => {
@@ -171,12 +171,12 @@ export const productsAPI = {
     },
 
     activateProduct: async (id: string) => {
-        const response = await api.patch(`products/activate-product/${id}/activate`);
+        const response = await api.patch(`products/activate-product/${id}`);
         return response.data;
     },
 
     deactivateProduct: async (id: string) => {
-        const response = await api.put(`products/deactivate-product/${id}/deactivate`);
+        const response = await api.patch(`products/deactivate-product/${id}`);
         return response.data;
     },
 
@@ -186,7 +186,7 @@ export const productsAPI = {
     },
 
     getById: async (id: string) => {
-        const response = await api.get(`products/${id}`);
+        const response = await api.get(`products/get-single-product/${id}`);
         return response.data;
     },
 
@@ -200,7 +200,7 @@ export const productsAPI = {
 // Categories API
 export const categoriesAPI = {
     addCategory: async (categoryData: FormData) => {
-        const response = await api.post('categories/add-category', categoryData, {
+        const response = await api.post('categories/create-category', categoryData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -209,7 +209,7 @@ export const categoriesAPI = {
     },
 
     getAll: async () => {
-      const response = await api.get('categories');
+      const response = await api.get('categories/get-all-categories');
       return response.data;
     },
 
