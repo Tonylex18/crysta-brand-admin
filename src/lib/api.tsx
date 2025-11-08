@@ -30,6 +30,10 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            window.location.href = '/auth';
+
             try {
                 const refreshResponse = await authAPI.refreshToken();
                 localStorage.setItem('authToken', refreshResponse.accessToken);
@@ -123,7 +127,7 @@ export const authAPI = {
     },
 
     signOut: async () => {
-        const response = await api.post('auth/signout');
+        const response = await api.post('admin/admin-signout');
         return response.data;
     },
 
@@ -144,6 +148,14 @@ export const verificationAPI = {
         return response.data;
     },
 };
+
+// Customer records
+export const customerAPI = {
+    getAllCustomer: async () => {
+        const response = await api.get("user/get-all-users")
+        return response.data;
+    }
+}
 
 // Products API
 export const productsAPI = {

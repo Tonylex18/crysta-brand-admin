@@ -77,14 +77,14 @@ export function DashboardPage(): JSX.Element {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <StatCard
           title="Sales total"
-          value={`$${stats.salesTotal.toFixed(2)}`}
+          value={`₦${stats.salesTotal.toFixed(2)}`}
           change=""
           changeType="up"
           comparison=""
         />
         <StatCard
           title="Average order value"
-          value={`$${stats.avgOrder.toFixed(2)}`}
+          value={`₦${stats.avgOrder.toFixed(2)}`}
           change=""
           changeType="up"
           comparison=""
@@ -145,7 +145,7 @@ export function DashboardPage(): JSX.Element {
                       {order.status}
                     </span>
                   </td>
-                  <td className="py-4 text-right text-gray-700">${order.total.toLocaleString()}</td>
+                  <td className="py-4 text-right text-gray-700">₦{order.total.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
