@@ -266,6 +266,11 @@ export const ordersAPI = {
         const response = await api.put(`orders/update-order-status/${id}`, { status });
         return response.data;
     },
+    
+    updatePaymentStatus: async (id: string, paymentStatus: string) => {
+        const response = await api.put(`orders/update-payment-status/${id}`, { paymentStatus });
+        return response.data;
+    },
 }
 
 
