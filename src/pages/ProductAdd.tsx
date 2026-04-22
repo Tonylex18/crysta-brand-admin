@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Upload, ArrowLeft } from "lucide-react";
-import { categoriesAPI, productsAPI } from "../lib/api";
+import { Upload, ArrowLeft, ChevronDown } from "lucide-react";
+import { categoriesAPI, productsAPI, subcategoriesAPI } from "../lib/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -8,7 +8,8 @@ export default function ProductAddPage() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [parentCategoryId, setParentCategoryId] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [sizes, setSizes] = useState("");
   const [colors, setColors] = useState("");
@@ -24,7 +25,9 @@ export default function ProductAddPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [subcategories, setSubcategories] = useState<{ id: string; name: string }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +35,7 @@ export default function ProductAddPage() {
     const loadCats = async () => {
       try {
         setLoadingCategories(true);
-        const res = await categoriesAPI.getAll();
+        const res = await categoriesAPI.getAll({ parent_id: "null" });
         const rows = Array.isArray(res) ? res : res?.data || [];
         setCategories(rows.map((r: any) => ({ id: r.id || r._id, name: r.name })));
       } catch (e: any) {
@@ -46,12 +49,35 @@ export default function ProductAddPage() {
     loadCats();
   }, []);
 
+  useEffect(() => {
+    const loadSubs = async () => {
+      if (!parentCategoryId) {
+        setSubcategories([]);
+        setSubcategoryId("");
+        return;
+      }
+      try {
+        setLoadingSubcategories(true);
+        const res = await subcategoriesAPI.getAll({ parent_id: parentCategoryId });
+        const rows = Array.isArray(res) ? res : res?.data || [];
+        setSubcategories(rows.map((r: any) => ({ id: r.id || r._id, name: r.name })));
+      } catch (e: any) {
+        toast.error(e?.message || "Failed to load subcategories");
+        setSubcategories([]);
+      } finally {
+        setLoadingSubcategories(false);
+      }
+    };
+    loadSubs();
+  }, [parentCategoryId]);
+
   const isValid = useMemo(() => {
     if (!name.trim()) return false;
     if (!price || Number.isNaN(parseFloat(price))) return false;
-    if (!categoryId) return false;
+    if (!parentCategoryId) return false;
+    if (!subcategoryId) return false;
     return true;
-  }, [name, price, categoryId]);
+  }, [name, price, parentCategoryId, subcategoryId]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +88,7 @@ export default function ProductAddPage() {
       const form = new FormData();
       form.append("name", name.trim());
       form.append("price", price);
-      form.append("category_id", categoryId);
+      form.append("category_id", subcategoryId);
       if (description.trim()) form.append("description", description.trim());
       if (sizes.trim()) form.append("sizes", sizes.trim());
       if (colors.trim()) form.append("colors", colors.trim());
@@ -119,14 +145,52 @@ export default function ProductAddPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300" required>
-            <option value="" disabled>{loadingCategories ? "Loading..." : "Select a category"}</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={parentCategoryId}
+              onChange={(e) => {
+                setParentCategoryId(e.target.value);
+                setSubcategoryId("");
+              }}
+              className="w-full h-10 px-3 pr-10 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 appearance-none"
+              required
+            >
+              <option value="" disabled>{loadingCategories ? "Loading..." : "Select a category"}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
           {!loadingCategories && categories.length === 0 && (
             <div className="text-xs text-gray-500 mt-1">No categories found. Create one in Categories.</div>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+          <div className="relative">
+            <select
+              value={subcategoryId}
+              onChange={(e) => setSubcategoryId(e.target.value)}
+              className="w-full h-10 px-3 pr-10 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 appearance-none"
+              required
+              disabled={!parentCategoryId || loadingSubcategories}
+            >
+              <option value="" disabled>
+                {!parentCategoryId
+                  ? "Select a category first"
+                  : loadingSubcategories
+                    ? "Loading..."
+                    : "Select a subcategory"}
+              </option>
+              {subcategories.map((sc) => (
+                <option key={sc.id} value={sc.id}>{sc.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+          {!loadingSubcategories && parentCategoryId && subcategories.length === 0 && (
+            <div className="text-xs text-gray-500 mt-1">No subcategories found. Create one in Categories.</div>
           )}
         </div>
         <div>
@@ -167,11 +231,12 @@ export default function ProductAddPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Featured</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Landing Page Placement</label>
           <div className="flex items-center gap-2">
             <input id="featured" type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-            <label htmlFor="featured" className="text-sm text-gray-700">Mark as featured</label>
+            <label htmlFor="featured" className="text-sm text-gray-700">Show in featured products section</label>
           </div>
+          <p className="mt-1 text-xs text-gray-500">If unchecked, the product stays out of the featured section and appears only under new arrivals.</p>
         </div>
 
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -232,5 +297,3 @@ export default function ProductAddPage() {
     </div>
   );
 }
-
-

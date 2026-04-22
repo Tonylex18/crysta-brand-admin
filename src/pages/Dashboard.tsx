@@ -43,16 +43,16 @@ export function DashboardPage(): JSX.Element {
         setLoading(true);
         setError(null);
         const res = await ordersAPI.getAllOrders();
-        const list = Array.isArray(res) ? res : res?.data || [];
+        const list = Array.isArray(res) ? res : res?.orders || res?.data || [];
         const normalized: Order[] = list.map((o: any) => ({
           id: o.id || o._id,
           orderNo: o.orderNo || o.orderNumber || `#${(o._id || '').slice(-6)}`,
           date: o.created_at || o.createdAt || '',
-          customer: o.user_id?.name || o.customer?.name || o.user?.name || 'Customer',
+          customer: o.user?.name || o.user?.email || o.customer?.name || 'Customer',
           items: o.items?.length || o.products?.length || 0,
-          paid: o.status === 'paid' || o.paymentStatus === 'paid',
-          status: (o.status || 'pending') as any,
-          total: o.total || o.totalAmount || 0,
+          paid: o.payment?.status === 'success' || o.paymentStatus === 'paid',
+          status: (o.status === 'pending_fulfillment' ? 'pending' : o.status || 'pending') as any,
+          total: o.totals?.grand_total_kobo ? o.totals.grand_total_kobo / 100 : (o.total || o.totalAmount || 0),
         }));
         setOrders(normalized);
       } catch (e: any) {

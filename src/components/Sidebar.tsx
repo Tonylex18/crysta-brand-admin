@@ -1,4 +1,4 @@
-import { BarChart3, LogOut, MessageSquare, Package, Settings, ShoppingBasket, ShoppingCart, Tag, Users, X } from "lucide-react";
+import { BarChart3, LogOut, MessageSquare, Package, Settings, ShoppingBasket, ShoppingCart, Tag, Truck, Users, X, Zap } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "../lib/api";
@@ -79,9 +79,12 @@ export const Sidebar = ({ currentPage, onNavigate, onClose }: SidebarProps) => {
             <div className="space-y-1">
               <MenuItem icon={BarChart3} label="Dashboard" page="dashboard" />
               <MenuItem icon={ShoppingBasket} label="Category" page="category" />
+              <MenuItem icon={Tag} label="Subcategories" page="subcategories" />
               <MenuItem icon={Package} label="Products" page="products" />
               <MenuItem icon={Users} label="Customers" page="customers" />
               <MenuItem icon={ShoppingCart} label="Orders" page="orders" />
+              <MenuItem icon={Truck} label="Shipping" page="shipping" />
+              <MenuItem icon={Zap} label="Flash Sales" page="flash-sales" />
               <MenuItem icon={Tag} label="Coupons" page="coupons" />
               <MenuItem icon={MessageSquare} label="Chats" page="chats" badge="4" />
             </div>

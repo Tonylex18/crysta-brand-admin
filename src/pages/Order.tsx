@@ -9,7 +9,7 @@ type Order = {
   date: string;
   customer: string;
   items: number;
-  paid: boolean;
+  paymentStatus: string;
   status: string;
   total: number;
 };
@@ -24,16 +24,16 @@ export function OrdersPage() {
       setLoading(true);
       setError(null);
       const res = await ordersAPI.getAllOrders();
-      const list = Array.isArray(res) ? res : res?.data || [];
+      const list = Array.isArray(res) ? res : res?.orders || res?.data || [];
       const normalized: Order[] = list.map((o: any) => ({
         id: o.id || o._id,
         orderNo: o.orderNo || o.orderNumber || `#${(o._id || '').slice(-6)}`,
         date: o.created_at || o.createdAt || '',
-        customer: o.user_id?.name || o.customer?.name || o.user?.name || 'Customer',
+        customer: o.user?.name || o.user?.email || o.customer?.name || 'Customer',
         items: o.items?.length || o.products?.length || 0,
-        paid: o.status === 'paid' || o.paymentStatus === 'paid',
-        status: o.status || 'pending',
-        total: o.total || o.totalAmount || 0,
+        paymentStatus: o.payment?.status || o.payment_status || o.paymentStatus || 'pending',
+        status: (o.status === 'pending_fulfillment' ? 'pending' : o.status) || 'pending',
+        total: o.totals?.grand_total_kobo ? o.totals.grand_total_kobo / 100 : (o.total || o.totalAmount || 0),
       }));
       setOrders(normalized);
     } catch (e: any) {
@@ -54,6 +54,30 @@ export function OrdersPage() {
     const cancelled = orders.filter(o => o.status === 'cancelled').length;
     return { totalOrders, pending, completed, cancelled };
   }, [orders]);
+
+  const paymentBadgeClass = (status: string) => {
+    switch (status) {
+      case 'success':
+      case 'paid':
+        return 'bg-green-100 text-green-700';
+      case 'refund_pending':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'refunded':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'refund_failed':
+        return 'bg-red-100 text-red-700';
+      case 'failed':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-orange-100 text-orange-700';
+    }
+  };
+
+  const formatPaymentLabel = (status: string) => {
+    if (status === 'refund_pending') return 'Refund Pending';
+    if (status === 'refund_failed') return 'Refund Failed';
+    return status.replace('_', ' ').toUpperCase();
+  };
 
   return (
     <div className="p-4 lg:p-8">
@@ -102,7 +126,7 @@ export function OrdersPage() {
                 <th className="py-3 px-4 font-medium">Date</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Items</th>
-                <th className="py-3 px-4 font-medium">Paid</th>
+                <th className="py-3 px-4 font-medium">Payment</th>
                 <th className="py-3 px-4 font-medium">Status</th>
                 <th className="py-3 px-4 font-medium text-right">Total</th>
                 <th className="py-3 px-4 font-medium text-right">Actions</th>
@@ -122,10 +146,8 @@ export function OrdersPage() {
                   <td className="py-4 px-4 text-gray-900">{order.customer}</td>
                   <td className="py-4 px-4 text-gray-600">{order.items} items</td>
                   <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      order.paid ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                    }`}>
-                      {order.paid ? 'Paid' : 'Unpaid'}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${paymentBadgeClass(order.paymentStatus)}`}>
+                      {formatPaymentLabel(order.paymentStatus)}
                     </span>
                   </td>
                   <td className="py-4 px-4">
@@ -134,9 +156,17 @@ export function OrdersPage() {
                       onChange={async (e) => {
                         const next = e.target.value;
                         try {
-                          await ordersAPI.updateOrderStatus(order.id, next);
-                          setOrders((prev) => prev.map(o => o.id === order.id ? { ...o, status: next } : o));
-                          toast.success(`Order ${order.orderNo} updated to ${next}`);
+                          if (next === 'cancelled') {
+                            const res = await ordersAPI.cancelOrder(order.id);
+                            const nextStatus = res?.status || res?.order_status || 'cancelled';
+                            const nextPayment = res?.payment?.status || res?.payment_status || order.paymentStatus;
+                            setOrders((prev) => prev.map(o => o.id === order.id ? { ...o, status: nextStatus, paymentStatus: nextPayment } : o));
+                            toast.success(`Order ${order.orderNo} cancelled`);
+                          } else {
+                            await ordersAPI.updateOrderStatus(order.id, next);
+                            setOrders((prev) => prev.map(o => o.id === order.id ? { ...o, status: next } : o));
+                            toast.success(`Order ${order.orderNo} updated to ${next}`);
+                          }
                         } catch (err: any) {
                           toast.error(err?.response?.data?.message || err?.message || 'Failed to update order');
                         }

@@ -66,6 +66,7 @@ export type Category = {
     slug: string;
     description: string | null;
     image_url: string | null;
+    parent_id?: { id?: string; _id?: string; name?: string; slug?: string } | string | null;
     created_at: string;
 };
 
@@ -76,6 +77,8 @@ export type Product = {
     description: string | null;
     price: number;
     category_id: string | null;
+    rating?: number;
+    rating_count?: number;
     image_url: string | null;
     images: string[];
     sizes: string[];
@@ -83,6 +86,19 @@ export type Product = {
     stock: number;
     featured: boolean;
     created_at: string;
+};
+
+export type FlashSale = {
+    id: string;
+    title: string;
+    subtitle?: string;
+    discountPercentage: number;
+    startsAt: string;
+    endsAt: string;
+    isEnabled: boolean;
+    ctaLabel?: string;
+    createdAt?: string;
+    updatedAt?: string;
 };
 
 export type Order = {
@@ -99,6 +115,33 @@ export type Order = {
         country: string;
     };
     created_at: string;
+};
+
+export type ShippingSettings = {
+    id: string;
+    buffer_percentage: number | null;
+    default_fee: number | null;
+    minimum_fee: number | null;
+};
+
+export type ShippingRate = {
+    id: string;
+    state: string;
+    base_fee: number;
+    is_active: boolean;
+    last_updated?: string;
+};
+
+export type LocationState = {
+    id: string;
+    name: string;
+    capital?: string;
+};
+
+export type LocationCity = {
+    id: string;
+    name: string;
+    state_id: string;
 };
 
 // Auth API
@@ -145,6 +188,22 @@ export const verificationAPI = {
     },
     resendOtp: async (email: string) => {
         const response = await api.post('admin/request-new-otp', { email });
+        return response.data;
+    },
+};
+
+// Locations API
+export const locationsAPI = {
+    getStates: async (): Promise<{ states: LocationState[] }> => {
+        const response = await api.get('locations/states');
+        return response.data;
+    },
+    getCitiesByStateId: async (stateId: string): Promise<{ cities: LocationCity[] }> => {
+        const response = await api.get(`locations/states/${stateId}/cities`);
+        return response.data;
+    },
+    getCitiesByStateName: async (state: string): Promise<{ cities: LocationCity[] }> => {
+        const response = await api.get('locations/cities', { params: { state } });
         return response.data;
     },
 };
@@ -208,6 +267,45 @@ export const productsAPI = {
     },
 };
 
+export const flashSalesAPI = {
+    getAll: async () => {
+        const response = await api.get('flash-sales');
+        return response.data;
+    },
+    getActive: async () => {
+        const response = await api.get('flash-sales/active');
+        return response.data;
+    },
+    create: async (payload: {
+        title: string;
+        subtitle?: string;
+        discountPercentage: number;
+        startsAt: string;
+        endsAt: string;
+        ctaLabel?: string;
+        isEnabled: boolean;
+    }) => {
+        const response = await api.post('flash-sales', payload);
+        return response.data;
+    },
+    update: async (id: string, payload: {
+        title: string;
+        subtitle?: string;
+        discountPercentage: number;
+        startsAt: string;
+        endsAt: string;
+        ctaLabel?: string;
+        isEnabled: boolean;
+    }) => {
+        const response = await api.put(`flash-sales/${id}`, payload);
+        return response.data;
+    },
+    delete: async (id: string) => {
+        const response = await api.delete(`flash-sales/${id}`);
+        return response.data;
+    },
+};
+
 
 // Categories API
 export const categoriesAPI = {
@@ -220,8 +318,8 @@ export const categoriesAPI = {
         return response.data;
     },
 
-    getAll: async () => {
-      const response = await api.get('categories/get-all-categories');
+    getAll: async (params?: Record<string, any>) => {
+      const response = await api.get('categories/get-all-categories', { params });
       return response.data;
     },
 
@@ -250,6 +348,26 @@ export const categoriesAPI = {
     }
   };
 
+// Subcategories API
+export const subcategoriesAPI = {
+    addSubcategory: async (subcategoryData: FormData) => {
+        const response = await api.post('subcategories/create-subcategory', subcategoryData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+    getAll: async (params?: Record<string, any>) => {
+        const response = await api.get('subcategories/get-all-subcategories', { params });
+        return response.data;
+    },
+    deleteSubcategory: async (id: string) => {
+        const response = await api.delete(`subcategories/delete-subcategory/${id}`);
+        return response.data;
+    },
+};
+
 //   orders API
 export const ordersAPI = {
     getAllOrders: async () => {
@@ -271,7 +389,39 @@ export const ordersAPI = {
         const response = await api.put(`orders/update-payment-status/${id}`, { paymentStatus });
         return response.data;
     },
+    cancelOrder: async (id: string) => {
+        const response = await api.post(`orders/${id}/cancel`);
+        return response.data;
+    },
 }
+
+// Shipping Pricing API
+export const shippingAPI = {
+    getSettings: async () => {
+        const response = await api.get('shipping/settings');
+        return response.data;
+    },
+    updateSettings: async (payload: { buffer_percentage: number; default_fee: number; minimum_fee: number; }) => {
+        const response = await api.put('shipping/settings', payload);
+        return response.data;
+    },
+    getRates: async () => {
+        const response = await api.get('shipping/rates');
+        return response.data;
+    },
+    upsertRate: async (payload: { state: string; base_fee: number; is_active?: boolean; }) => {
+        const response = await api.post('shipping/rates', payload);
+        return response.data;
+    },
+    deleteRate: async (id: string) => {
+        const response = await api.delete(`shipping/rates/${id}`);
+        return response.data;
+    },
+    preview: async (payload: { base_fee: number; }) => {
+        const response = await api.post('shipping/preview', payload);
+        return response.data;
+    },
+};
 
 
 export function resolveImageUrl(path?: string | null): string {

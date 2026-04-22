@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Image as ImageIcon, X, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Image as ImageIcon, X, Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
-import { categoriesAPI } from "../lib/api";
+import { categoriesAPI, subcategoriesAPI } from "../lib/api";
 
-type CategoryRow = {
+type SubcategoryRow = {
   id: string;
   name: string;
   slug: string;
@@ -13,8 +13,9 @@ type CategoryRow = {
   created_at: string;
 };
 
-export default function Categories() {
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
+export default function Subcategories() {
+  const [subcategories, setSubcategories] = useState<SubcategoryRow[]>([]);
+  const [parents, setParents] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,27 +24,33 @@ export default function Categories() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [parentId, setParentId] = useState("");
 
-  const isValid = useMemo(() => name.trim().length > 0, [name]);
+  const isValid = useMemo(() => name.trim().length > 0 && !!parentId, [name, parentId]);
 
   const load = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await categoriesAPI.getAll({ parent_id: "null" });
-      const rows = Array.isArray(res) ? res : res?.data || [];
-      const normalized: CategoryRow[] = rows.map((r: any) => ({
+      const [subsRes, parentsRes] = await Promise.all([
+        subcategoriesAPI.getAll(),
+        categoriesAPI.getAll({ parent_id: "null" }),
+      ]);
+      const subsRows = Array.isArray(subsRes) ? subsRes : subsRes?.data || [];
+      const parentsRows = Array.isArray(parentsRes) ? parentsRes : parentsRes?.data || [];
+      const normalized: SubcategoryRow[] = subsRows.map((r: any) => ({
         id: r.id || r._id,
         name: r.name,
         slug: r.slug,
         description: r.description ?? null,
         image_url: r.image_url ?? null,
-        parent_name: typeof r.parent_id === 'object' ? r.parent_id?.name || null : null,
+        parent_name: typeof r.parent_id === "object" ? r.parent_id?.name || null : null,
         created_at: r.created_at || r.createdAt || "",
       }));
-      setCategories(normalized);
+      setSubcategories(normalized);
+      setParents(parentsRows.map((r: any) => ({ id: r.id || r._id, name: r.name })));
     } catch (e: any) {
-      const msg = e?.message || "Failed to load categories";
+      const msg = e?.message || "Failed to load subcategories";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -62,18 +69,20 @@ export default function Categories() {
       setSubmitting(true);
       const form = new FormData();
       form.append("name", name.trim());
+      form.append("parent_id", parentId);
       if (description.trim()) form.append("description", description.trim());
       if (imageFile) form.append("image_url", imageFile);
 
-      await categoriesAPI.addCategory(form);
+      await subcategoriesAPI.addSubcategory(form);
       setOpen(false);
       setName("");
       setDescription("");
       setImageFile(null);
+      setParentId("");
       await load();
-      toast.success("Category created successfully");
+      toast.success("Subcategory created successfully");
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || "Failed to create category";
+      const msg = e?.response?.data?.message || e?.message || "Failed to create subcategory";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -84,10 +93,10 @@ export default function Categories() {
   const onDelete = async (id: string) => {
     try {
       setLoading(true);
-      await categoriesAPI.deleteCategory(id);
+      await subcategoriesAPI.deleteSubcategory(id);
       await load();
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || "Failed to delete category";
+      const msg = e?.response?.data?.message || e?.message || "Failed to delete subcategory";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -98,7 +107,7 @@ export default function Categories() {
   return (
     <div className="p-4 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Subcategories</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={load}
@@ -113,7 +122,7 @@ export default function Categories() {
             className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5" />
-            <span>New Category</span>
+            <span>New Subcategory</span>
           </button>
         </div>
       </div>
@@ -127,8 +136,9 @@ export default function Categories() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr className="text-gray-500 text-left text-sm">
-                <th className="py-3 px-4 font-medium">Category</th>
-                <th className="py-3 px-4 font-medium hidden sm:table-cell">Slug</th>
+                <th className="py-3 px-4 font-medium">Subcategory</th>
+                <th className="py-3 px-4 font-medium hidden sm:table-cell">Parent</th>
+                <th className="py-3 px-4 font-medium hidden md:table-cell">Slug</th>
                 <th className="py-3 px-4 font-medium hidden md:table-cell">Description</th>
                 <th className="py-3 px-4 font-medium text-right">Actions</th>
               </tr>
@@ -136,15 +146,15 @@ export default function Categories() {
             <tbody>
               {loading && (
                 <tr>
-                  <td className="py-6 px-4 text-gray-500" colSpan={4}>Loading...</td>
+                  <td className="py-6 px-4 text-gray-500" colSpan={5}>Loading...</td>
                 </tr>
               )}
-              {!loading && categories.length === 0 && (
+              {!loading && subcategories.length === 0 && (
                 <tr>
-                  <td className="py-6 px-4 text-gray-500" colSpan={4}>No categories yet</td>
+                  <td className="py-6 px-4 text-gray-500" colSpan={5}>No subcategories yet</td>
                 </tr>
               )}
-              {categories.map((cat) => (
+              {subcategories.map((cat) => (
                 <tr key={cat.id || cat.slug} className="border-b last:border-0 hover:bg-gray-50">
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
@@ -163,7 +173,8 @@ export default function Categories() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4 hidden sm:table-cell text-gray-600">{cat.slug}</td>
+                  <td className="py-4 px-4 hidden sm:table-cell text-gray-600">{cat.parent_name || "-"}</td>
+                  <td className="py-4 px-4 hidden md:table-cell text-gray-600">{cat.slug}</td>
                   <td className="py-4 px-4 hidden md:table-cell text-gray-600">
                     <span className="line-clamp-1 max-w-[360px] inline-block">{cat.description || '-'}</span>
                   </td>
@@ -190,7 +201,7 @@ export default function Categories() {
           <div className="absolute inset-0 bg-black/50" onClick={() => !submitting && setOpen(false)} />
           <div className="relative bg-white rounded-xl w-[95%] sm:w-[540px] max-w-[96vw] p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Create Category</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Create Subcategory</h2>
               <button onClick={() => !submitting && setOpen(false)} className="p-1 rounded hover:bg-gray-100">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -202,10 +213,29 @@ export default function Categories() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Electronics"
+                  placeholder="e.g. Headphones"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                <div className="relative">
+                  <select
+                    value={parentId}
+                    onChange={(e) => setParentId(e.target.value)}
+                    className="w-full h-10 px-3 pr-10 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 appearance-none"
+                    required
+                  >
+                    <option value="" disabled>Select a category</option>
+                    {parents.map((parent) => (
+                      <option key={parent.id} value={parent.id}>
+                        {parent.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

@@ -9,6 +9,9 @@ type ProductRow = {
   name: string;
   category: string;
   price: number;
+  featured: boolean;
+  rating: number;
+  ratingCount: number;
   stock: number;
   status: 'active' | 'inactive';
   image: string;
@@ -33,6 +36,9 @@ export function ProductsPage() {
         name: p.name,
         category: p.category_id?.name || "-",
         price: p.price,
+        featured: !!p.featured,
+        rating: Number(p.rating || 0),
+        ratingCount: Number(p.rating_count || 0),
         stock: p.stock ?? 0,
         status: p.isActive ? 'active' : 'inactive',
         image: resolveImageUrl(p.image_url),
@@ -87,6 +93,8 @@ export function ProductsPage() {
                 <th className="py-3 px-4 font-medium">Product</th>
                 <th className="py-3 px-4 font-medium">Category</th>
                 <th className="py-3 px-4 font-medium">Price</th>
+                <th className="py-3 px-4 font-medium">Placement</th>
+                <th className="py-3 px-4 font-medium">Ratings</th>
                 <th className="py-3 px-4 font-medium">Stock</th>
                 <th className="py-3 px-4 font-medium">Status</th>
                 <th className="py-3 px-4 font-medium text-right">Actions</th>
@@ -95,17 +103,17 @@ export function ProductsPage() {
             <tbody>
               {error && (
                 <tr>
-                  <td className="py-6 px-4 text-red-600" colSpan={6}>{error}</td>
+                  <td className="py-6 px-4 text-red-600" colSpan={8}>{error}</td>
                 </tr>
               )}
               {loading && (
                 <tr>
-                  <td className="py-6 px-4 text-gray-500" colSpan={6}>Loading...</td>
+                  <td className="py-6 px-4 text-gray-500" colSpan={8}>Loading...</td>
                 </tr>
               )}
               {!loading && !error && products.length === 0 && (
                 <tr>
-                  <td className="py-10 px-4 text-center text-gray-500" colSpan={6}>
+                  <td className="py-10 px-4 text-center text-gray-500" colSpan={8}>
                     No products yet. Click "Add Product" to create your first product.
                   </td>
                 </tr>
@@ -120,6 +128,14 @@ export function ProductsPage() {
                   </td>
                   <td className="py-4 px-4 text-gray-600">{product.category}</td>
                   <td className="py-4 px-4 text-gray-900 font-medium">₦{product.price}</td>
+                  <td className="py-4 px-4">
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${product.featured ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                      {product.featured ? 'Featured' : 'New arrival only'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {product.ratingCount > 0 ? `${product.rating.toFixed(1)} (${product.ratingCount})` : 'No ratings'}
+                  </td>
                   <td className="py-4 px-4">
                     <span className={`${product.stock === 0 ? 'text-red-600' : 'text-gray-600'}`}>
                       {product.stock} units

@@ -15,6 +15,9 @@ import Chats from "./pages/Chats";
 import ProductAddPage from "./pages/ProductAdd";
 import ProductEditPage from "./pages/ProductEdit";
 import Categories from "./pages/Category";
+import Subcategories from "./pages/Subcategory";
+import ShippingPricing from "./pages/ShippingPricing";
+import FlashSalesPage from "./pages/FlashSales";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -63,11 +66,14 @@ function ProtectedLayout() {
           <Routes>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="category" element={<Categories />} />
+            <Route path="subcategories" element={<Subcategories />} />
             <Route path="products" element={<ProductsPage />} />
             <Route path="products/add" element={<ProductAddPage />} />
             <Route path="products/:id/edit" element={<ProductEditPage />} />
             <Route path="customers" element={<CustomersPage />} />
             <Route path="orders" element={<OrdersPage />} />
+            <Route path="shipping" element={<ShippingPricing />} />
+            <Route path="flash-sales" element={<FlashSalesPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="coupons" element={<Coupon />} />
             <Route path="chats" element={<Chats />} />
