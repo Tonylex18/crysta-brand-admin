@@ -59,6 +59,34 @@ export type Admin = {
     created_at: string;
 };
 
+export type AdminNotification = {
+    id: string;
+    type: string;
+    title: string;
+    message: string;
+    link?: string;
+    is_read: boolean;
+    created_at: string;
+};
+
+export type AdminNotificationPreferences = {
+    new_orders: boolean;
+    low_stock_alerts: boolean;
+    customer_messages: boolean;
+    weekly_reports: boolean;
+};
+
+export type ContactMessage = {
+    id: string;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+};
+
 
 export type Category = {
     id: string;
@@ -176,6 +204,40 @@ export const authAPI = {
 
     refreshToken: async () => {
         const response = await api.post('admin/refresh-token');
+        return response.data;
+    },
+};
+
+export const adminNotificationAPI = {
+    getNotifications: async (): Promise<{ notifications: AdminNotification[]; unread_count: number }> => {
+        const response = await api.get('admin/notifications');
+        return response.data;
+    },
+    readNotification: async (id: string) => {
+        const response = await api.post(`admin/notifications/${id}/read`);
+        return response.data;
+    },
+    readAll: async () => {
+        const response = await api.post('admin/notifications/read-all');
+        return response.data;
+    },
+    getPreferences: async (): Promise<{ preferences: AdminNotificationPreferences }> => {
+        const response = await api.get('admin/notification-preferences');
+        return response.data;
+    },
+    savePreferences: async (preferences: AdminNotificationPreferences) => {
+        const response = await api.put('admin/notification-preferences', preferences);
+        return response.data;
+    },
+};
+
+export const contactMessagesAPI = {
+    list: async (): Promise<{ messages: ContactMessage[] }> => {
+        const response = await api.get('contact');
+        return response.data;
+    },
+    updateStatus: async (id: string, status: string) => {
+        const response = await api.patch(`contact/${id}/status`, { status });
         return response.data;
     },
 };

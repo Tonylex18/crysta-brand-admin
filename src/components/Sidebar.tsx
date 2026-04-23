@@ -29,12 +29,10 @@ export const Sidebar = ({ currentPage, onNavigate, onClose }: SidebarProps) => {
     icon: Icon,
     label,
     page,
-    badge
   }: {
     icon: any;
     label: string;
     page: string;
-    badge?: string;
   }) => (
     <div
       onClick={() => {
@@ -48,11 +46,6 @@ export const Sidebar = ({ currentPage, onNavigate, onClose }: SidebarProps) => {
         <Icon className="w-5 h-5" />
         <span className="font-medium">{label}</span>
       </div>
-      {badge && (
-        <span className="bg-teal-700 text-white text-xs font-bold px-2 py-1 rounded">
-          {badge}
-        </span>
-      )}
     </div>
   );
 
@@ -86,7 +79,7 @@ export const Sidebar = ({ currentPage, onNavigate, onClose }: SidebarProps) => {
               <MenuItem icon={Truck} label="Shipping" page="shipping" />
               <MenuItem icon={Zap} label="Flash Sales" page="flash-sales" />
               <MenuItem icon={Tag} label="Coupons" page="coupons" />
-              <MenuItem icon={MessageSquare} label="Chats" page="chats" badge="4" />
+              <MenuItem icon={MessageSquare} label="Chats" page="chats" />
             </div>
           </div>
           <div>
